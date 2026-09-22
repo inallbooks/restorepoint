@@ -1,0 +1,42 @@
+{
+  "name": "snapshot-app",
+  "version": "1.0.0",
+  "description": "Offline codebase snapshot & time machine — one-click backup, restore and version history for any folder. No git, no cloud, no account. Local-first, privacy-first.",
+  "main": "server.js",
+  "keywords": [
+    "backup",
+    "restore",
+    "backup-restore",
+    "backup-system",
+    "backup-restore-system",
+    "snapshot",
+    "version-control",
+    "git-alternative",
+    "without-git",
+    "time-machine",
+    "local-first",
+    "offline-first",
+    "no-git",
+    "codebase-backup",
+    "folder-backup",
+    "file-history",
+    "ai-agent",
+    "ai-safety",
+    "undo",
+    "privacy",
+    "self-hosted",
+    "developer-tools"
+  ],
+  "scripts": {
+    "start": "node server.js",
+    "test": "node tests/run.js"
+  },
+  "dependencies": {
+    "archiver": "^7.0.1",
+    "chokidar": "^5.0.0",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "ignore": "^5.3.1",
+    "unzipper": "^0.12.1"
+  }
+}

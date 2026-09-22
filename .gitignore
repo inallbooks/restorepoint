@@ -1,0 +1,8 @@
+node_modules/
+*.log
+crash.log
+config.json
+.env
+
+# snapshot app backups
+.snapshot/

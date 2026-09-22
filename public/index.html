@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SNAPSHOT// — codebase time machine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<!-- FIRST RUN: choose project -->
+<div id="gate" class="gate hidden">
+  <div class="gate-inner">
+    <div class="wordmark-xl">SNAPSHOT<span class="accent">//</span></div>
+    <p class="gate-sub">Point me at your codebase. Nothing leaves this machine.</p>
+    <div class="gate-form">
+      <input id="gate-path" type="text" placeholder="D:\Code\my-project" spellcheck="false" autocomplete="off" />
+      <button id="gate-browse" class="btn ghost">Browse</button>
+      <button id="gate-open" class="btn primary">Open project</button>
+    </div>
+    <p id="gate-error" class="gate-error"></p>
+    <div id="gate-recents" class="gate-recents"></div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app" class="app hidden">
+  <header class="topbar">
+    <div class="wordmark">SNAPSHOT<span class="accent">//</span></div>
+    <div class="project-chip" id="project-chip" title="">
+      <span class="chip-dot"></span><span id="project-name"></span>
+    </div>
+    <div class="topbar-right">
+      <span id="busy-dot" class="busy-dot"></span>
+      <button id="btn-change-project" class="btn ghost small" title="Switch to a different codebase folder">Change folder</button>
+      <button id="btn-settings" class="btn ghost small">Settings</button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <!-- LEFT RAIL -->
+    <aside class="rail">
+      <section class="composer card">
+        <div class="micro-label">New snapshot</div>
+        <input id="snap-name" type="text" placeholder="Name this moment…" maxlength="80" spellcheck="false" />
+        <button id="btn-snapshot" class="btn primary wide">Save snapshot</button>
+        <p class="hint">Entire codebase · ignores applied · zip archive</p>
+      </section>
+
+      <section class="stat card">
+        <div class="micro-label">Storage</div>
+        <div id="stat-snapshots" class="stat-num">0</div>
+        <div class="stat-sub">snapshots · <span id="stat-size">0 B</span> on disk</div>
+        <div class="stat-path" id="stat-path"></div>
+      </section>
+    </aside>
+
+    <!-- TIMELINE -->
+    <section class="timeline-wrap">
+      <div class="timeline-head">
+        <div class="micro-label">Timeline</div>
+        <div class="now-marker"><span class="now-pulse"></span> NOW — current code</div>
+      </div>
+      <div id="timeline" class="timeline"></div>
+      <div id="empty" class="empty hidden">
+        <div class="empty-mark">∅</div>
+        <p>No snapshots yet.<br/>Name a moment on the left, press save.</p>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- SETTINGS DRAWER -->
+<div id="settings-overlay" class="overlay hidden">
+  <div class="drawer">
+    <div class="drawer-head">
+      <div class="micro-label">Settings</div>
+      <button id="settings-close" class="btn ghost small">Close</button>
+    </div>
+
+    <div class="field">
+      <label class="micro-label">Backup folder</label>
+      <input id="set-backup-path" type="text" placeholder="empty = <project>\.snapshot" spellcheck="false" />
+      <p class="hint">Leave empty to keep backups inside the codebase at <code>.snapshot/</code></p>
+    </div>
+
+    <div class="field row">
+      <label class="toggle-row" for="set-gitignore">
+        <input type="checkbox" id="set-gitignore" />
+        <span class="toggle"></span>
+        <span>Respect <code>.gitignore</code></span>
+      </label>
+    </div>
+
+    <div class="field row">
+      <label class="toggle-row" for="set-preserve">
+        <input type="checkbox" id="set-preserve" />
+        <span class="toggle"></span>
+        <span>Preserve ignored paths on restore<br /><small style="color:var(--txt-faint)">node_modules, .env etc. survive restores</small></span>
+      </label>
+    </div>
+
+    <div class="field row">
+      <label class="toggle-row" for="set-watch">
+        <input type="checkbox" id="set-watch" />
+        <span class="toggle"></span>
+        <span>Live change detection<br /><small style="color:var(--txt-faint)">watch codebase, show unsaved changes</small></span>
+      </label>
+    </div>
+
+    <div class="field row">
+      <label class="toggle-row" for="set-agent-snap">
+        <input type="checkbox" id="set-agent-snap" />
+        <span class="toggle"></span>
+        <span>Auto-snapshot before AI agent sessions<br /><small style="color:var(--txt-faint)">undo any AI mess in one click</small></span>
+      </label>
+    </div>
+
+    <div class="field row">
+      <label class="toggle-row" for="set-session-snap">
+        <input type="checkbox" id="set-session-snap" />
+        <span class="toggle"></span>
+        <span>Auto-snapshot when a session ends<br /><small style="color:var(--txt-faint)">after 5 min of no changes</small></span>
+      </label>
+    </div>
+
+    <div class="field">
+      <label class="micro-label">Auto-snapshot</label>
+      <div style="display:flex;align-items:center;gap:10px">
+        <input id="set-auto-hours" type="text" inputmode="numeric" style="width:90px" placeholder="0" />
+        <span style="font-size:13px;color:var(--txt-dim)">hours between automatic snapshots (0 = off)</span>
+      </div>
+    </div>
+
+    <div class="field">
+      <div class="ignore-head">
+        <label class="micro-label">Ignored files &amp; folders</label>
+        <button id="ignore-add" class="btn primary small" title="Add row">+</button>
+      </div>
+      <div id="ignore-table" class="ignore-table"></div>
+      <p class="hint">Paths are relative to project root. Types: folder, file, or glob (<code>*.log</code>, <code>tmp/**</code>)</p>
+    </div>
+
+    <button id="settings-save" class="btn primary wide">Save settings</button>
+  </div>
+</div>
+
+<!-- CONFIRM MODAL -->
+<div id="modal" class="overlay modal hidden">
+  <div class="modal-box">
+    <div class="micro-label danger">Restore snapshot</div>
+    <p id="modal-text" class="modal-text"></p>
+    <p class="modal-note">A safety snapshot of your <em>current</em> code is saved automatically first. Files not in the snapshot will be removed.</p>
+    <div class="modal-actions">
+      <button id="modal-cancel" class="btn ghost">Cancel</button>
+      <button id="modal-confirm" class="btn danger">Restore it</button>
+    </div>
+  </div>
+</div>
+
+<!-- PROGRESS OVERLAY -->
+<div id="prog" class="overlay prog hidden">
+  <div class="prog-inner">
+    <div id="prog-op" class="prog-op">SNAPSHOT</div>
+    <div id="prog-pct" class="prog-pct">0<span>%</span></div>
+    <div class="prog-bar"><div id="prog-fill" class="prog-fill"></div></div>
+    <div id="prog-msg" class="prog-msg">…</div>
+  </div>
+</div>
+
+<div id="toasts" class="toasts"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
